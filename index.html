@@ -2,198 +2,311 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Character Stats</title>
 <style>
-  :root{
-    --page:#f4f6f8;
-    --card:#ffffff;
-    --text:#202124;
-    --muted:#6b7280;
-    --grid:#d7dce2;
-    --accent:#4f7cff;
-    --fill:rgba(79,124,255,.18);
-  }
-
-  *{box-sizing:border-box}
-
-  body{
-    margin:0;
-    min-height:100vh;
-    display:grid;
-    place-items:center;
-    padding:18px;
-    background:var(--page);
-    color:var(--text);
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  }
-
-  .card{
-    width:min(760px,100%);
-    background:var(--card);
-    border:1px solid #e3e6ea;
-    border-radius:18px;
-    padding:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
-  }
-
-  h1{
-    margin:0;
-    font-size:22px;
-    text-align:center;
-  }
-
-  .subtitle{
-    margin:5px 0 8px;
-    color:var(--muted);
-    font-size:13px;
-    text-align:center;
-  }
-
-  canvas{
-    width:100%;
-    height:auto;
-    display:block;
-  }
+:root{
+  --page:#f4f6f8;
+  --card:#ffffff;
+  --text:#202124;
+  --muted:#6b7280;
+  --grid:#d7dce2;
+  --accent:#4f7cff;
+  --fill:rgba(79,124,255,.18);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:var(--page);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+.card{
+  width:min(1200px,98vw);
+  background:var(--card);
+  border:1px solid #e3e6ea;
+  border-radius:18px;
+  padding:10px 16px 16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.08);
+  position:relative;
+}
+.header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+}
+h1{margin:0;font-size:22px}
+.subtitle{margin:5px 0 8px;color:var(--muted);font-size:13px}
+.settings-btn{
+  border:1px solid #d7dce2;
+  background:#fff;
+  color:#374151;
+  border-radius:10px;
+  padding:8px 10px;
+  cursor:pointer;
+  font-size:15px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
+}
+.settings-btn:hover{background:#f7f9fc}
+canvas{width:100%;height:auto;display:block}
+.settings{
+  max-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:max-height .28s ease, opacity .2s ease, margin-top .28s ease;
+  margin-top:0;
+}
+.settings.open{
+  max-height:520px;
+  opacity:1;
+  margin-top:14px;
+}
+.settings-inner{
+  border-top:1px solid #e5e7eb;
+  padding-top:14px;
+}
+.row{
+  display:grid;
+  grid-template-columns:120px 1fr 64px;
+  gap:10px;
+  align-items:center;
+  margin:10px 0;
+}
+.row label{
+  font-size:13px;
+  font-weight:600;
+}
+input[type="range"]{
+  width:100%;
+  accent-color:var(--accent);
+}
+input[type="number"]{
+  width:64px;
+  padding:7px 8px;
+  border:1px solid #ccd2d9;
+  border-radius:8px;
+  color:var(--text);
+  background:#fff;
+}
+.actions{
+  display:flex;
+  gap:8px;
+  justify-content:flex-end;
+  margin-top:14px;
+}
+button.action{
+  border:0;
+  border-radius:9px;
+  padding:9px 12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.save{background:var(--accent);color:white}
+.cancel{background:#eef1f5;color:#374151}
+.note{
+  font-size:11px;
+  color:var(--muted);
+  margin-top:10px;
+  text-align:center;
+}
+@media(max-width:560px){
+  .row{grid-template-columns:95px 1fr 58px}
+}
 </style>
 </head>
 <body>
-  <div class="card">
-    <h1>Character Stats</h1>
-    <div class="subtitle">Fixed scale: 0–50</div>
-    <canvas id="radar" width="720" height="580"></canvas>
+<div class="card">
+  <div class="header">
+    <div>
+      
+      
+    </div>
+    <button class="settings-btn" id="settingsBtn" aria-expanded="false" title="Edit values">⚙️</button>
   </div>
 
-<script>
-/*
-  EDIT YOUR VALUES HERE.
-  Keep each value between 0 and 50.
-*/
-const labels = [
-  "Strength",
-  "Stamina",
-  "Discipline",
-  "Endurance",
-  "Intelligence"
-];
+  <canvas id="radar" width="1200" height="900"></canvas>
 
-const values = [
-  2,
-  2,
-  2,
-  2,
-  2
-];
+  <div class="settings" id="settingsPanel">
+    <div class="settings-inner" id="controls"></div>
+    <div class="actions">
+      <button class="action cancel" id="cancelBtn">Cancel</button>
+      <button class="action save" id="saveBtn">Save</button>
+    </div>
+    <div class="note">Saved values stay in this browser.</div>
+  </div>
+</div>
+
+<script>
+const labels = ["Strength","Stamina","Discipline","Endurance","Intelligence"];
+const defaults = [10,10,10,10,10];
+let values = JSON.parse(localStorage.getItem("radar50Values") || "null") || defaults.slice();
+let draft = values.slice();
 
 const canvas = document.getElementById("radar");
 const ctx = canvas.getContext("2d");
+const settingsBtn = document.getElementById("settingsBtn");
+const settingsPanel = document.getElementById("settingsPanel");
+const controls = document.getElementById("controls");
 
-function clamp(value){
-  return Math.max(0, Math.min(50, Number(value) || 0));
+function clamp(v){
+  return Math.max(0, Math.min(50, Number(v) || 0));
 }
 
-function point(cx, cy, radius, angle){
-  return [
-    cx + Math.cos(angle) * radius,
-    cy + Math.sin(angle) * radius
-  ];
-}
+labels.forEach((label,i)=>{
+  const row = document.createElement("div");
+  row.className = "row";
 
-function polygon(points, stroke, fill, width = 1){
-  ctx.beginPath();
+  const name = document.createElement("label");
+  name.textContent = label;
 
-  points.forEach((p, index) => {
-    if(index === 0){
-      ctx.moveTo(p[0], p[1]);
-    }else{
-      ctx.lineTo(p[0], p[1]);
-    }
+  const slider = document.createElement("input");
+  slider.type = "range";
+  slider.min = "0";
+  slider.max = "50";
+  slider.step = "1";
+  slider.value = draft[i];
+
+  const number = document.createElement("input");
+  number.type = "number";
+  number.min = "0";
+  number.max = "50";
+  number.step = "1";
+  number.value = draft[i];
+
+  slider.addEventListener("input",()=>{
+    draft[i] = clamp(slider.value);
+    number.value = draft[i];
+    draw(draft);
   });
 
-  ctx.closePath();
+  number.addEventListener("input",()=>{
+    draft[i] = clamp(number.value);
+    slider.value = draft[i];
+    draw(draft);
+  });
 
+  row.append(name, slider, number);
+  controls.appendChild(row);
+});
+
+function syncControls(){
+  const rows = [...controls.querySelectorAll(".row")];
+  rows.forEach((row,i)=>{
+    const slider = row.querySelector('input[type="range"]');
+    const number = row.querySelector('input[type="number"]');
+    slider.value = draft[i];
+    number.value = draft[i];
+  });
+}
+
+settingsBtn.addEventListener("click",()=>{
+  const opening = !settingsPanel.classList.contains("open");
+  if(opening){
+    draft = values.slice();
+    syncControls();
+    draw(draft);
+  }
+  settingsPanel.classList.toggle("open", opening);
+  settingsBtn.setAttribute("aria-expanded", String(opening));
+});
+
+document.getElementById("saveBtn").addEventListener("click",()=>{
+  values = draft.map(clamp);
+  localStorage.setItem("radar50Values", JSON.stringify(values));
+  draw(values);
+  settingsPanel.classList.remove("open");
+  settingsBtn.setAttribute("aria-expanded","false");
+});
+
+document.getElementById("cancelBtn").addEventListener("click",()=>{
+  draft = values.slice();
+  syncControls();
+  draw(values);
+  settingsPanel.classList.remove("open");
+  settingsBtn.setAttribute("aria-expanded","false");
+});
+
+function point(cx,cy,r,angle){
+  return [cx + Math.cos(angle)*r, cy + Math.sin(angle)*r];
+}
+
+function polygon(points,stroke,fill,width=1){
+  ctx.beginPath();
+  points.forEach((p,i)=>i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+  ctx.closePath();
   if(fill){
     ctx.fillStyle = fill;
     ctx.fill();
   }
-
   ctx.strokeStyle = stroke;
   ctx.lineWidth = width;
   ctx.stroke();
 }
 
-function draw(){
-  const width = canvas.width;
-  const height = canvas.height;
+function draw(sourceValues){
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0,0,w,h);
 
-  ctx.clearRect(0, 0, width, height);
-
-  const cx = width / 2;
-  const cy = height / 2 + 18;
-  const maxRadius = Math.min(width, height) * 0.34;
-  const count = labels.length;
-  const startAngle = -Math.PI / 2;
+  const cx = w/2;
+  const cy = h/2 + 18;
+  const maxR = Math.min(w,h)*0.34;
+  const n = labels.length;
+  const start = -Math.PI/2;
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  for(let ring = 1; ring <= 5; ring++){
-    const radius = maxRadius * (ring / 5);
-    const ringPoints = [];
-
-    for(let i = 0; i < count; i++){
-      ringPoints.push(
-        point(cx, cy, radius, startAngle + i * 2 * Math.PI / count)
-      );
+  for(let ring=1; ring<=5; ring++){
+    const r = maxR*(ring/5);
+    const pts = [];
+    for(let i=0;i<n;i++){
+      pts.push(point(cx,cy,r,start+i*2*Math.PI/n));
     }
-
-    polygon(ringPoints, "#d7dce2", null, 1);
-
+    polygon(pts,"#d7dce2",null,1);
     ctx.fillStyle = "#7a828c";
     ctx.font = "12px Inter, Arial, sans-serif";
-    ctx.fillText(String(ring * 10), cx + 6, cy - radius + 12);
+    ctx.fillText(String(ring*10),cx+6,cy-r+12);
   }
 
-  for(let i = 0; i < count; i++){
-    const angle = startAngle + i * 2 * Math.PI / count;
-    const outer = point(cx, cy, maxRadius, angle);
+  for(let i=0;i<n;i++){
+    const angle = start+i*2*Math.PI/n;
+    const outer = point(cx,cy,maxR,angle);
 
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(outer[0], outer[1]);
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(outer[0],outer[1]);
     ctx.strokeStyle = "#d7dce2";
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    const labelPoint = point(cx, cy, maxRadius + 42, angle);
-
+    const labelPoint = point(cx,cy,maxR+42,angle);
     ctx.fillStyle = "#202124";
     ctx.font = "600 14px Inter, Arial, sans-serif";
-    ctx.fillText(labels[i], labelPoint[0], labelPoint[1]);
+    ctx.fillText(labels[i],labelPoint[0],labelPoint[1]);
 
-    const valuePoint = point(cx, cy, maxRadius + 20, angle);
-
+    const valuePoint = point(cx,cy,maxR+20,angle);
     ctx.fillStyle = "#6b7280";
     ctx.font = "12px Inter, Arial, sans-serif";
-    ctx.fillText(`${clamp(values[i])}/50`, valuePoint[0], valuePoint[1]);
+    ctx.fillText(`${clamp(sourceValues[i])}/50`,valuePoint[0],valuePoint[1]);
   }
 
-  const dataPoints = values.map((value, i) => {
-    const angle = startAngle + i * 2 * Math.PI / count;
-    const radius = maxRadius * (clamp(value) / 50);
-    return point(cx, cy, radius, angle);
+  const dataPoints = sourceValues.map((value,i)=>{
+    const angle = start+i*2*Math.PI/n;
+    const r = maxR*(clamp(value)/50);
+    return point(cx,cy,r,angle);
   });
 
-  polygon(
-    dataPoints,
-    "#4f7cff",
-    "rgba(79,124,255,.18)",
-    3
-  );
+  polygon(dataPoints,"#4f7cff","rgba(79,124,255,.18)",3);
 
-  dataPoints.forEach(p => {
+  dataPoints.forEach(p=>{
     ctx.beginPath();
-    ctx.arc(p[0], p[1], 5, 0, Math.PI * 2);
+    ctx.arc(p[0],p[1],5,0,Math.PI*2);
     ctx.fillStyle = "#4f7cff";
     ctx.fill();
     ctx.strokeStyle = "#ffffff";
@@ -202,7 +315,7 @@ function draw(){
   });
 }
 
-draw();
+draw(values);
 </script>
 </body>
 </html>
