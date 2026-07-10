@@ -26,11 +26,11 @@ body{
   font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
 }
 .card{
-  width:min(1200px,98vw);
+  width:min(1600px,100vw);
   background:var(--card);
   border:1px solid #e3e6ea;
   border-radius:18px;
-  padding:10px 16px 16px;
+  padding:4px 8px 8px;
   box-shadow:0 10px 30px rgba(0,0,0,.08);
   position:relative;
 }
@@ -129,7 +129,7 @@ button.action{
     <button class="settings-btn" id="settingsBtn" aria-expanded="false" title="Edit values">⚙️</button>
   </div>
 
-  <canvas id="radar" width="1200" height="900"></canvas>
+  <canvas id="radar" width="1600" height="1200"></canvas>
 
   <div class="settings" id="settingsPanel">
     <div class="settings-inner" id="controls"></div>
@@ -255,7 +255,7 @@ function draw(sourceValues){
 
   const cx = w/2;
   const cy = h/2 + 18;
-  const maxR = Math.min(w,h)*0.34;
+  const maxR = Math.min(w,h)*0.43;
   const n = labels.length;
   const start = -Math.PI/2;
 
@@ -285,12 +285,12 @@ function draw(sourceValues){
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    const labelPoint = point(cx,cy,maxR+42,angle);
+    const labelPoint = point(cx,cy,maxR+52,angle);
     ctx.fillStyle = "#202124";
     ctx.font = "600 14px Inter, Arial, sans-serif";
     ctx.fillText(labels[i],labelPoint[0],labelPoint[1]);
 
-    const valuePoint = point(cx,cy,maxR+20,angle);
+    const valuePoint = point(cx,cy,maxR+28,angle);
     ctx.fillStyle = "#6b7280";
     ctx.font = "12px Inter, Arial, sans-serif";
     ctx.fillText(`${clamp(sourceValues[i])}/50`,valuePoint[0],valuePoint[1]);
