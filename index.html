@@ -1,217 +1,206 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>20-Point Radar Stats</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Character Stats</title>
 <style>
   :root{
-    --bg:#111318;
-    --card:#191c23;
-    --text:#f4f6fb;
-    --muted:#aab0bf;
-    --grid:#3a404d;
-    --accent:#7c5cff;
-    --fill:rgba(124,92,255,.28);
+    --page:#f4f6f8;
+    --card:#ffffff;
+    --text:#202124;
+    --muted:#6b7280;
+    --grid:#d7dce2;
+    --accent:#4f7cff;
+    --fill:rgba(79,124,255,.18);
   }
+
   *{box-sizing:border-box}
+
   body{
     margin:0;
     min-height:100vh;
-    background:var(--bg);
-    color:var(--text);
-    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     display:grid;
     place-items:center;
-    padding:16px;
+    padding:18px;
+    background:var(--page);
+    color:var(--text);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   }
+
   .card{
     width:min(760px,100%);
     background:var(--card);
-    border:1px solid rgba(255,255,255,.08);
+    border:1px solid #e3e6ea;
     border-radius:18px;
-    padding:18px;
-    box-shadow:0 12px 40px rgba(0,0,0,.35);
+    padding:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
   }
-  .top{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:12px;
-    margin-bottom:8px;
+
+  h1{
+    margin:0;
+    font-size:22px;
+    text-align:center;
   }
-  h1{font-size:20px;margin:0}
-  .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
-  canvas{width:100%;height:auto;display:block}
-  .editor{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
-    gap:10px;
-    margin-top:12px;
-  }
-  label{
+
+  .subtitle{
+    margin:5px 0 8px;
     color:var(--muted);
-    font-size:12px;
-    display:grid;
-    gap:5px;
+    font-size:13px;
+    text-align:center;
   }
-  input{
+
+  canvas{
     width:100%;
-    padding:9px 10px;
-    border-radius:9px;
-    border:1px solid rgba(255,255,255,.12);
-    background:#101218;
-    color:var(--text);
+    height:auto;
+    display:block;
   }
-  .buttons{
-    display:flex;
-    gap:8px;
-    margin-top:12px;
-    flex-wrap:wrap;
-  }
-  button{
-    border:0;
-    border-radius:9px;
-    padding:9px 12px;
-    cursor:pointer;
-    font-weight:700;
-  }
-  .primary{background:var(--accent);color:white}
-  .secondary{background:#2a2f3a;color:var(--text)}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="top">
-    <div>
-      <h1>Character Stats</h1>
-      <div class="sub">Fixed scale: 0–20</div>
-    </div>
+  <div class="card">
+    <h1>Character Stats</h1>
+    <div class="subtitle">Fixed scale: 0–50</div>
+    <canvas id="radar" width="720" height="580"></canvas>
   </div>
-
-  <canvas id="radar" width="700" height="560"></canvas>
-
-  <div class="editor" id="editor"></div>
-  <div class="buttons">
-    <button class="primary" id="saveBtn">Save values</button>
-    <button class="secondary" id="resetBtn">Reset</button>
-  </div>
-</div>
 
 <script>
-const labels = ["Strength","Stamina","Discipline","Endurance","Willpower"];
-const defaults = [1,1,1,1,1];
-let values = JSON.parse(localStorage.getItem("radarValues") || "null") || defaults.slice();
+/*
+  EDIT YOUR VALUES HERE.
+  Keep each value between 0 and 50.
+*/
+const labels = [
+  "Strength",
+  "Stamina",
+  "Discipline",
+  "Endurance",
+  "Intelligence"
+];
+
+const values = [
+  2,
+  2,
+  2,
+  2,
+  2
+];
 
 const canvas = document.getElementById("radar");
 const ctx = canvas.getContext("2d");
-const editor = document.getElementById("editor");
 
-function clamp(n){ return Math.max(0, Math.min(20, Number(n)||0)); }
-
-labels.forEach((label,i)=>{
-  const wrap=document.createElement("label");
-  wrap.textContent=label;
-  const input=document.createElement("input");
-  input.type="number";
-  input.min="0";
-  input.max="20";
-  input.step="1";
-  input.value=values[i];
-  input.dataset.index=i;
-  input.addEventListener("input",()=>{
-    values[i]=clamp(input.value);
-    draw();
-  });
-  wrap.appendChild(input);
-  editor.appendChild(wrap);
-});
-
-function point(cx,cy,r,angle){
-  return [cx + Math.cos(angle)*r, cy + Math.sin(angle)*r];
+function clamp(value){
+  return Math.max(0, Math.min(50, Number(value) || 0));
 }
 
-function polygon(points, stroke, fill, width=1){
+function point(cx, cy, radius, angle){
+  return [
+    cx + Math.cos(angle) * radius,
+    cy + Math.sin(angle) * radius
+  ];
+}
+
+function polygon(points, stroke, fill, width = 1){
   ctx.beginPath();
-  points.forEach((p,i)=> i ? ctx.lineTo(p[0],p[1]) : ctx.moveTo(p[0],p[1]));
+
+  points.forEach((p, index) => {
+    if(index === 0){
+      ctx.moveTo(p[0], p[1]);
+    }else{
+      ctx.lineTo(p[0], p[1]);
+    }
+  });
+
   ctx.closePath();
-  if(fill){ctx.fillStyle=fill;ctx.fill();}
-  ctx.strokeStyle=stroke;
-  ctx.lineWidth=width;
+
+  if(fill){
+    ctx.fillStyle = fill;
+    ctx.fill();
+  }
+
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = width;
   ctx.stroke();
 }
 
 function draw(){
-  const w=canvas.width,h=canvas.height;
-  ctx.clearRect(0,0,w,h);
+  const width = canvas.width;
+  const height = canvas.height;
 
-  const cx=w/2, cy=h/2+8;
-  const maxR=Math.min(w,h)*0.34;
-  const n=labels.length;
-  const start=-Math.PI/2;
+  ctx.clearRect(0, 0, width, height);
 
-  ctx.font="13px system-ui";
-  ctx.textAlign="center";
-  ctx.textBaseline="middle";
+  const cx = width / 2;
+  const cy = height / 2 + 18;
+  const maxRadius = Math.min(width, height) * 0.34;
+  const count = labels.length;
+  const startAngle = -Math.PI / 2;
 
-  for(let ring=1; ring<=4; ring++){
-    const r=maxR*(ring/4);
-    const pts=[];
-    for(let i=0;i<n;i++) pts.push(point(cx,cy,r,start+i*2*Math.PI/n));
-    polygon(pts,"#3a404d",null,1);
-    ctx.fillStyle="#8f96a7";
-    ctx.fillText(String(ring*5),cx+5,cy-r+10);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  for(let ring = 1; ring <= 5; ring++){
+    const radius = maxRadius * (ring / 5);
+    const ringPoints = [];
+
+    for(let i = 0; i < count; i++){
+      ringPoints.push(
+        point(cx, cy, radius, startAngle + i * 2 * Math.PI / count)
+      );
+    }
+
+    polygon(ringPoints, "#d7dce2", null, 1);
+
+    ctx.fillStyle = "#7a828c";
+    ctx.font = "12px Inter, Arial, sans-serif";
+    ctx.fillText(String(ring * 10), cx + 6, cy - radius + 12);
   }
 
-  for(let i=0;i<n;i++){
-    const p=point(cx,cy,maxR,start+i*2*Math.PI/n);
+  for(let i = 0; i < count; i++){
+    const angle = startAngle + i * 2 * Math.PI / count;
+    const outer = point(cx, cy, maxRadius, angle);
+
     ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.lineTo(p[0],p[1]);
-    ctx.strokeStyle="#3a404d";
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(outer[0], outer[1]);
+    ctx.strokeStyle = "#d7dce2";
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    const lp=point(cx,cy,maxR+38,start+i*2*Math.PI/n);
-    ctx.fillStyle="#f4f6fb";
-    ctx.font="bold 14px system-ui";
-    ctx.fillText(labels[i],lp[0],lp[1]);
+    const labelPoint = point(cx, cy, maxRadius + 42, angle);
 
-    const vp=point(cx,cy,maxR+17,start+i*2*Math.PI/n);
-    ctx.fillStyle="#aab0bf";
-    ctx.font="12px system-ui";
-    ctx.fillText(values[i]+"/20",vp[0],vp[1]);
+    ctx.fillStyle = "#202124";
+    ctx.font = "600 14px Inter, Arial, sans-serif";
+    ctx.fillText(labels[i], labelPoint[0], labelPoint[1]);
+
+    const valuePoint = point(cx, cy, maxRadius + 20, angle);
+
+    ctx.fillStyle = "#6b7280";
+    ctx.font = "12px Inter, Arial, sans-serif";
+    ctx.fillText(`${clamp(values[i])}/50`, valuePoint[0], valuePoint[1]);
   }
 
-  const dataPts=[];
-  for(let i=0;i<n;i++){
-    const r=maxR*(clamp(values[i])/20);
-    dataPts.push(point(cx,cy,r,start+i*2*Math.PI/n));
-  }
-  polygon(dataPts,"#7c5cff","rgba(124,92,255,.28)",3);
+  const dataPoints = values.map((value, i) => {
+    const angle = startAngle + i * 2 * Math.PI / count;
+    const radius = maxRadius * (clamp(value) / 50);
+    return point(cx, cy, radius, angle);
+  });
 
-  dataPts.forEach(p=>{
+  polygon(
+    dataPoints,
+    "#4f7cff",
+    "rgba(79,124,255,.18)",
+    3
+  );
+
+  dataPoints.forEach(p => {
     ctx.beginPath();
-    ctx.arc(p[0],p[1],5,0,Math.PI*2);
-    ctx.fillStyle="#7c5cff";
+    ctx.arc(p[0], p[1], 5, 0, Math.PI * 2);
+    ctx.fillStyle = "#4f7cff";
     ctx.fill();
-    ctx.strokeStyle="#ffffff";
-    ctx.lineWidth=2;
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 2;
     ctx.stroke();
   });
 }
-
-document.getElementById("saveBtn").onclick=()=>{
-  values=values.map(clamp);
-  localStorage.setItem("radarValues",JSON.stringify(values));
-  draw();
-};
-
-document.getElementById("resetBtn").onclick=()=>{
-  values=defaults.slice();
-  [...editor.querySelectorAll("input")].forEach((el,i)=>el.value=values[i]);
-  localStorage.removeItem("radarValues");
-  draw();
-};
 
 draw();
 </script>
